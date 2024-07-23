@@ -1,0 +1,43 @@
+#!/bin/bash
+
+mkdir data_combined
+
+# Directory containing the barcode folders
+base_directory="data"
+
+# Directory for combined files to be placed in 
+output_directory="data_combined"
+
+# Loop through each barcode folder
+for barcode_dir in ${base_directory}/barcode*/; do
+  # Check if the directory exists
+  if [ -d "$barcode_dir" ]; then
+    # Extract the barcode name (e.g., barcode01)
+    barcode_name=$(basename $barcode_dir)
+    
+    # Temporary uncompressed output file
+    temp_output_file="${barcode_name}_combined.fastq"
+
+    # Final compressed output file
+    final_output_file="${output_directory}/${barcode_name}_combined.fastq.gz"
+
+    # Check if there are any .fastq.gz files in the directory
+    fastq_files=(${barcode_dir}/*.fastq.gz)
+    if [ -e "${fastq_files[0]}" ]; then
+      # Combine all compressed FASTQ files into a single uncompressed file
+      zcat ${barcode_dir}/*.fastq.gz > ${temp_output_file}
+      
+      # Compress the combined file
+      gzip ${temp_output_file}
+      
+      # Move to the final output file
+      mv ${temp_output_file}.gz ${final_output_file}
+      
+      echo "All FASTQ files in ${barcode_name} have been combined into ${final_output_file}"
+    else
+      echo "No .fastq.gz files found in $barcode_dir"
+    fi
+  else
+    echo "Directory $barcode_dir does not exist."
+  fi
+done
